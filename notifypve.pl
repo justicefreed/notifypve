@@ -50,7 +50,7 @@ use JSON::Parse 'parse_json';
 my ($opt, $usage) = describe_options(
         'notifypve %o <subject line with or without spaces>',
         [ 'message|m:s', "The message body for the notification. Defaults to empty string" ],
-        [ 'severity',   "The message severity / priority",   { one_of => [
+        [ 'severity' => hidden => { one_of => [
                 [ 'error|e'     => "Use severity level 'error' (highest). Default" ],
                 [ 'warning|w'   => "Use severity level 'warning' (second-highest)" ],
                 [ 'notice|n'    => "Use severity level 'notice' (second-lowest)" ],
