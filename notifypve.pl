@@ -50,6 +50,7 @@ use JSON::Parse 'parse_json';
 my ($opt, $usage) = describe_options(
         'notifypve %o <subject line with or without spaces>',
         [ 'message|m:s', "The message body for the notification. Defaults to empty string" ],
+        [ 'file|f:s', "The file to insert into the message body for the notification." ],
         [ 'severity' => hidden => { one_of => [
                 [ 'error|e'     => "Use severity level 'error' (highest). Default" ],
                 [ 'warning|w'   => "Use severity level 'warning' (second-highest)" ],
@@ -106,7 +107,16 @@ print "Sending notification with subject: " . $subject . "\n";
 my $hostname = `hostname -f` || PVE::INotify::nodename();
 chomp $hostname;
 $hostname = $opt->hostname() if ($opt->hostname());
-
+my $message = $opt->message();
+if ($opt->file()) {
+    $message = do {
+        local $/ = undef;
+        open my $fh, "<", $opt->file()
+            or die "Could not open $opt->file(): $!";
+        <$fh>;
+    };
+    chomp($message);
+}
 my $template_data = {
         "subject" => $subject,
         "message" => $opt->message()
