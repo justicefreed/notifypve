@@ -79,7 +79,7 @@ if ( ! -e $notifbody ) {
 }
 if ( ! -e $notifbodyhtml ) {
         open(my $file, ">", $notifbodyhtml) or die $!;
-        print $file "<html>\n    <body>\n                {{message}}\n       </body>\n</html>\n";
+        print $file "<html><body><pre>{{message}}</pre></body></html>\n";
         close($file);
 }
 
