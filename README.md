@@ -63,3 +63,13 @@ notifypve [-ehijmntw] [long options...] <subject line with or without spaces>
                                  editable template files
         --help                   print usage message and exit
 ```
+
+## wraptask
+
+wraptask is a simple wrapper that takes a task name string as the first argument, and then runs the following arguments. It then calls notifypve with either error or info severity depending on the exit code, and includes stdout and stderr in the message body.  Useful for cron jobs, etc
+
+You can paste the one-liner below to install the script into /usr/bin.
+
+```bash
+wget -O /usr/bin/wraptask https://raw.githubusercontent.com/justicefreed/notifypve/refs/heads/main/wraptask && chmod +x /usr/bin/wraptask
+```
