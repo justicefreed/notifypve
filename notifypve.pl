@@ -50,7 +50,7 @@ use JSON::Parse 'parse_json';
 my ($opt, $usage) = describe_options(
         'notifypve %o <subject line with or without spaces>',
         [ 'message|m:s', "The message body for the notification. Defaults to empty string" ],
-        [ 'file|f:s', "The file to insert into the message body for the notification." ],
+        [ 'file|f:s', "The file to insert into the message body for the notification. Overrides message if provided." ],
         [ 'severity' => hidden => { one_of => [
                 [ 'error|e'     => "Use severity level 'error' (highest). Default" ],
                 [ 'warning|w'   => "Use severity level 'warning' (second-highest)" ],
@@ -67,11 +67,13 @@ my ($opt, $usage) = describe_options(
 );
 print($usage->text), exit if $opt->help();
 
+my $templatename = $opt->template();
+
 my $template_dir = "/usr/share/pve-manager/templates/default/";
 # ensure template files exist
-my $notifbody = $template_dir . $opt->template() . "-body.txt.hbs";
-my $notifbodyhtml = $template_dir . $opt->template() . "-body.html.hbs";
-my $notifsubj = $template_dir . $opt->template() . "-subject.txt.hbs";
+my $notifbody = $template_dir . $templatename . "-body.txt.hbs";
+my $notifbodyhtml = $template_dir . $templatename . "-body.html.hbs";
+my $notifsubj = $template_dir . $templatename . "-subject.txt.hbs";
 if ( ! -e $notifbody ) {
         open(my $file, ">", $notifbody) || die "Can't open file";
         print $file "{{message}}\n";
@@ -119,7 +121,7 @@ if ($opt->file()) {
 }
 my $template_data = {
         "subject" => $subject,
-        "message" => $opt->message()
+        "message" => $message
 };
 if ($opt->json()) {
         my $json_data = JSON::Parse::parse_json($opt->json());
@@ -132,4 +134,4 @@ my $metadata_fields = {
 my $severity = "error";
 $severity = $opt->severity() if ($opt->severity());
 
-PVE::Notify::notify($severity, $opt->template(), $template_data, $metadata_fields);
+PVE::Notify::notify($severity, $templatename, $template_data, $metadata_fields);
