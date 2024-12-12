@@ -1,30 +1,29 @@
 #!/bin/bash
 
-_TASKNAME="$1"
+TASKNAME="$1"
 shift;
-_TASKCMD="$@"
+TASKCMD="$@"
 
-_LOGFILE=$(mktemp || "/dev/null")
-trap 'rm -f -- "$_LOGFILE"' EXIT
+LOGFILE=$(mktemp || "/dev/null")
+trap 'rm -f -- "$LOGFILE"' EXIT
 
-echo "Starting Task: $_TASKNAME" | ts '[%Y-%m-%d %H:%M:%S]' | tee -a "$_LOGFILE" 2>&1
-echo "Running Command: $_TASKCMD" | ts '[%Y-%m-%d %H:%M:%S]' | tee -a "$_LOGFILE" 2>&1
+{
+    echo "Starting Task: $TASKNAME"
+    echo "Running Command: $TASKCMD"
+    ${TASKCMD}
+    RETVAL=$?
+    echo "Task exited with code $RETVAL"
+    exit $RETVAL
+} |& ts '[%Y-%m-%d %H:%M:%S]' |& tee -a "$LOGFILE"
+RETVAL=${PIPESTATUS[0]}
 
-${_TASKCMD} | ts '[%Y-%m-%d %H:%M:%S]' | tee -a "$_LOGFILE" 2>&1
-_RETVAL=$?
-
-echo "Task exited with code $_RETVAL" | ts '[%Y-%m-%d %H:%M:%S]' | tee -a "$_LOGFILE" 2>&1
-
-
-LOG="$(iconv -f ASCII -t UTF-8 $_LOGFILE)"
-
-_HOSTNAME=$(hostname)
-if [ $_RETVAL -ne 0 ]; then
-    notifypve -e -m "$LOG" "ERROR from $_HOSTNAME - Task $_TASKNAME Failed"
+HOSTNAME=$(hostname)
+if [ $RETVAL -ne 0 ]; then
+    notifypve -e -f "$LOGFILE" "ERROR from $HOSTNAME - Task $TASKNAME Failed"
 else
-    notifypve -i -m "$LOG" "INFO from $_HOSTNAME - Task $_TASKNAME Succeeded"
+    notifypve -i -f "$LOGFILE" "INFO from $HOSTNAME - Task $TASKNAME Succeeded"
 fi
 
-rm -f -- "$_LOGFILE"
+rm -f -- "$LOGFILE"
 trap - EXIT
 exit 0
