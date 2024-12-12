@@ -2,9 +2,9 @@
 Simple Utility to Send Notifications to Proxmox PVE Notification System
 
 ## What is it?
-Proxmox recently released a notification system that allows for various options for filtering and routing notifications (such as sending a backup job error to your email address).  The system is supposed to support forwarding of system mail (sent to root@pam) into the notification system, but the implementation is still incomplete, and Proxmox does not expose any friendly API for directly using their notification system in any way.
+Proxmox recently released a notification system that allows for various options for filtering and routing notifications (such as sending a backup job error to your email address). Proxmox does not expose any friendly API for directly using their notification system in any way. Further, while system mail (sent to root@pam) is now forwarded properly (as of 8.3.1), is always treated as an "unknown" severity level, meaning that you either have to handle ALL system mail or NONE of it!  
 
-This perl script hooks into the Proxmox notification system and allows you to send customized notifications.
+This perl script hooks into the Proxmox notification system and allows you to send customized notifications, including a custom severity level.
 
 ## Basic Usage
 
@@ -36,9 +36,12 @@ The command syntax can be requested by passing the `--help` argument, for exampl
 
 ```
 root@proxmox:~# notifypve --help
-notifypve [-ehijmntw] [long options...] <subject line with or without spaces>
+notifypve [-efhijmntw] [long options...] <subject line with or without spaces>
         --message[=STR] (or -m)  The message body for the notification.
                                  Defaults to empty string
+        --file[=STR] (or -f)     The file to insert into the message body for
+                                 the notification. Overrides message if
+                                 provided.
         --error (or -e)          Use severity level 'error' (highest). Default
         --warning (or -w)        Use severity level 'warning' (second-highest)
         --notice (or -n)         Use severity level 'notice' (second-lowest)
@@ -66,10 +69,12 @@ notifypve [-ehijmntw] [long options...] <subject line with or without spaces>
 
 ## wraptask
 
-wraptask is a simple wrapper that takes a task name string as the first argument, and then runs the following arguments. It then calls notifypve with either error or info severity depending on the exit code, and includes stdout and stderr in the message body.  Useful for cron jobs, etc
+`wraptask` is a simple wrapper application that captures the stdout/stderror and exit code of a given command, and then uses `notifypve` to send the task result and the complete logs. Useful for cron jobs and other similar tasks where the built-in emails or notification systems are not sufficient.
 
-You can paste the one-liner below to install the script into /usr/bin.
+It takes a task name string as the first argument, and then runs the following arguments. `notifypve` is called with either error or info severity depending on the exit code, and includes stdout and stderr in the message body, formatted with timestamps per line.
+
+You can paste the one-liner below to install the script into /usr/bin. It requires the `ts` module for the timestamps, which is bundled as part of the `moreutils` package and will be installed if missing by the below command as well.
 
 ```bash
-wget -O /usr/bin/wraptask https://raw.githubusercontent.com/justicefreed/notifypve/refs/heads/main/wraptask.sh && chmod +x /usr/bin/wraptask
+wget -O /usr/bin/wraptask https://raw.githubusercontent.com/justicefreed/notifypve/refs/heads/main/wraptask.sh && chmod +x /usr/bin/wraptask && (command -v ts >/dev/null || apt install -y moreutils)
 ```
